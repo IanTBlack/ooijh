@@ -1,0 +1,9 @@
+echopype
+fsspec
+gsw
+netCDF4
+numpy
+opencv-python
+pandas
+scipy
+xarray
