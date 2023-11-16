@@ -47,7 +47,7 @@ class PCO2(KDATA):
         return ds_list
     
     
-    def process(self,ds: xr.Dataset) -> xr.Dateaset:
+    def process(self,ds: xr.Dataset) -> xr.Dataset:
         """
         The process function is for operations or actions that can be performed after multiple datasets of the same
             type are combined.
