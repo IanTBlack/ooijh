@@ -5,3 +5,8 @@ from ooijh.instruments.dosta import DOSTA
 from ooijh.instruments.nutnr import NUTNR
 from ooijh.instruments.velpt import VELPT
 from ooijh.instruments.spkir import SPKIR
+from ooijh.instruments.metbk import METBK
+from ooijh.instruments.phsen import PHSEN
+from ooijh.instruments.pco2 import PCO2
+from ooijh.instruments.vel3d import VEL3D
+from ooijh.instruments.optaa import OPTAA
