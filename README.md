@@ -8,7 +8,7 @@ The code within this repository will only work with the OOI JupyterHub.
 
 `git clone https://github.com/IanTBlack/ooijh.git`
 
-2. Install the repo as a Python package.
+2. Install the repo as a local Python package.
 
 `cd ooijh`
 
