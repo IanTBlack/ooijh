@@ -1,17 +1,19 @@
+"""IN DEVELOPMENT"""
+
 from datetime import datetime
 import echopype as ep
 import fsspec
 import os
 import re
 import warnings
+import xarray as xr
 
 from ooijh.core import _USER_DIR
 
 class ZPLSC():
     
     SITE_PATH = {'CE04OSPS': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/pc01b/ZPLSCB102_10.33.10.143",
-                 'CE02SHBP': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/mj01c/ZPLSCB101_10.33.13.7",
-}
+                 'CE02SHBP': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/mj01c/ZPLSCB101_10.33.13.7"}
     
     def __init__(self, site: str, begin_datetime: datetime, end_datetime: datetime):
         self.bdt = begin_datetime
@@ -19,7 +21,8 @@ class ZPLSC():
         self._base_dir = self.SITE_PATH[site.upper()]
         self.files = self.find_files()
     
-    def find_files(self):
+    
+    def find_files(self) -> list:
         local = fsspec.filesystem('file')
         files = []
         year_dirs = [yd for yd in local.glob(self._base_dir + '/*') if 'log' not in yd and 'config' not in yd and '_Cal' not in yd and 'Collier' not in yd]
@@ -39,12 +42,12 @@ class ZPLSC():
         return files
         
         
-    def open_file(self, filepath):
+    def open_file(self, filepath: os.path.abspath):
         ed = ep.open_raw(raw_file = filepath, sonar_model = 'ek60')
         return ed
     
     
-    def combine_data(self, filepaths):
+    def combine_data(self, filepaths: list):
         ed_list = []
         with warnings.catch_warnings():
             warnings.simplefilter("ignore") # Catch user warnings that echopype may throw. Usually time related warnings.
@@ -59,7 +62,7 @@ class ZPLSC():
         return ed
     
     
-    def process(self, ed, depth_bin, time_bin):
+    def process(self, ed, depth_bin: float, time_bin: str) -> xr.Dataset:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore") # Catch user warnings that echopype may throw. Usually empty slice warnings.
             sv = ep.calibrate.compute_Sv(ed).compute()
@@ -74,7 +77,7 @@ class ZPLSC():
         return mvbs
 
     
-    def get_data(self, depth_bin = 0.2, time_bin = '10s'):
+    def get_data(self, depth_bin: float = 0.2, time_bin: str = '10s') -> xr.Dataset:
         ed = self.combine_data(self.files)
         mvbs = self.process(ed, depth_bin, time_bin)
         return mvbs

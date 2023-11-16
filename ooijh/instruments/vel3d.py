@@ -3,16 +3,16 @@ import multiprocessing
 import xarray as xr
 
 from ooijh.core import KDATA
-from ooijh.drops import DROP_PCO2_VARS, drop_qartod_test_vars
+from ooijh.drops import DROP_VEL3D_VARS, drop_qartod_test_vars
 
 
-class PCO2(KDATA):
-    def __init__(self, site: str, node: str, instrument: str = 'PCO2', stream: str = 'pco2', 
+class VEL3D(KDATA):
+    def __init__(self, site: str, node: str, instrument: str = 'VEL3D', stream: str = 'vel3d', 
                  begin_datetime: datetime = datetime(2014,1,1), end_datetime: datetime = datetime(2040,12,31,23,59,59),
                  process_qartod: bool = True, nan_flags: list = [4,9], drop_qartod: bool = True):
 
         """
-        A class for obtaining preprocessed and processed PCO2 data.
+        A class for obtaining preprocessed and processed CTD data.
 
         :param site: An 8-character OOI designator for a site.
             It is recommended to use the full site designator.
@@ -28,9 +28,10 @@ class PCO2(KDATA):
         """
 
         super().__init__(site.upper(), node.upper(), instrument.upper(), stream.lower(), 
-                         begin_datetime, end_datetime, process_qartod, nan_flags, drop_qartod)
+                         begin_datetime, end_datetime, 
+                         process_qartod, nan_flags, drop_qartod)
     
-
+    
     def preprocess(self, ds_list: list) -> list:
         """
         The preprocess function is for operations or actions that may be dataset dependent.
@@ -38,7 +39,8 @@ class PCO2(KDATA):
         :param ds_list: A list of xarray datasets.
         :return: A list of preprocessed xarray datasets.
         """
-        ds_list = [ds.drop_vars(DROP_PCO2_VARS, errors = 'ignore') for ds in ds_list]
+
+        ds_list = [ds.drop_vars(DROP_VEL3D_VARS, errors = 'ignore') for ds in ds_list]
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
@@ -47,7 +49,7 @@ class PCO2(KDATA):
         return ds_list
     
     
-    def process(self,ds: xr.Dataset) -> xr.Dateaset:
+    def process(self, ds: xr.Dataset) -> xr.Dataset:
         """
         The process function is for operations or actions that can be performed after multiple datasets of the same
             type are combined.
@@ -56,15 +58,14 @@ class PCO2(KDATA):
         :return: The output processed xarray dataset.
         """
         return ds
-    
         
+      
     def get_data(self) -> xr.Dataset:
         """
         The get_data function performs the preprocess and process functions and serves up data to the end user.
 
         :return: An xarray dataset containing the data of interest.
         """
-
         ds_list = self.open_datasets() # Open all datasets.
         ds_list = self.preprocess(ds_list)
         ds = self.combine_data(ds_list)
@@ -72,3 +73,4 @@ class PCO2(KDATA):
         ds = ds[sorted(ds.data_vars)] # Sort variables alphabetically because it is less obtrusive.
         return ds
         
+

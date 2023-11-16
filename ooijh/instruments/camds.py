@@ -1,3 +1,5 @@
+"""IN DEVELOPMENT"""
+
 import cv2
 from datetime import datetime
 import fsspec
@@ -41,43 +43,8 @@ class CAMDS():
         files = sorted(files)
         return files
         
-        
-#     def open_file(self, filepath):
-#         ed = ep.open_raw(raw_file = filepath, sonar_model = 'ek60')
-#         return ed
-    
-    
-#     def combine_data(self, filepaths):
-#         ed_list = []
-#         with warnings.catch_warnings():
-#             warnings.simplefilter("ignore") # Catch user warnings that echopype may throw. Usually time related warnings.
-#             for fp in filepaths:
-#                 _ed = self.open_file(fp)
-#                 if len(_ed.platform.channel) == 3:
-#                     ed_list.append(_ed)
-#                 else:
-#                     msg = f"File: {fp} only has {len(_ed.platform.channel)} channels. This file will not be added to the combined dataset."
-#                     raise warnings.warn(msg)
-#             ed = ep.combine_echodata(ed_list)
-#         return ed
-    
-    
-#     def process(self, ed, depth_bin, time_bin):
-#         with warnings.catch_warnings():
-#             warnings.simplefilter("ignore") # Catch user warnings that echopype may throw. Usually empty slice warnings.
-#             sv = ep.calibrate.compute_Sv(ed).compute()
-#             mvbs = ep.commongrid.compute_MVBS(sv, range_meter_bin = depth_bin, ping_time_bin = time_bin)
-#             mvbs = mvbs.assign_coords(depth = ('echo_range', mvbs['echo_range'].values[::-1]))
-#             mvbs = mvbs.swap_dims({'echo_range':'depth'})
-#             mvbs = ep.consolidate.swap_dims_channel_frequency(mvbs)
-#             mvbs = mvbs.drop_vars(['channel'], errors = 'ignore')
-#             mvbs = mvbs.drop_dims(['echo_range'], errors = 'ignore')
-#             mvbs = mvbs.rename({'Sv':'sv'})
-#         return mvbs
 
+    def open_image(self, filepath):
+        im = cv2.imread(file)
+        return im
     
-#     def get_data(self, depth_bin = 0.2, time_bin = '10s'):
-#         ed = self.combine_data(self.files)
-#         mvbs = self.process(ed, depth_bin, time_bin)
-#         return mvbs
-        

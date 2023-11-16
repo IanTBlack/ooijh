@@ -1,69 +1,143 @@
 from datetime import datetime
-import fsspec
-import os
+import multiprocessing
 import numpy as np
 import os
 import re
 from scipy import interpolate
 from struct import calcsize
+import warnings
 import xarray as xr
 
+from ooijh.core import KDATA, _USER_DIR
+from ooijh.drops import DROP_OPTAA_VARS, drop_qartod_test_vars
 
-from ooijh.core import KDATA
-      
 
 class OPTAA(KDATA):
-    def __init__(self, site, node, instrument = 'OPTAA', stream = 'optaa',
-                 begin_datetime = datetime(2014,1,1), end_datetime = datetime(2040,12,31,23,59,59),
-                 process_qartod_vars = True, drop_qartod_test_vars = True):
-        super().__init__(site.upper(), node.upper(), instrument.upper(), stream.lower(), begin_datetime, end_datetime)
+    def __init__(self, site: str, node: str, instrument: str = 'OPTAA', stream: str = 'optaa',
+                 begin_datetime: datetime = datetime(2014,1,1), end_datetime: datetime = datetime(2040,12,31,23,59,59),
+                 process_qartod: bool = True, nan_flags: list = [4,9], drop_qartod: bool = True,
+                 dev_filepaths: None or list = None, tscor_filepath: None or os.path.abspath = None):
+        """
+        A class for obtaining preprocessed and processed OPTAA data.
+
+        :param site: An 8-character OOI designator for a site.
+            It is recommended to use the full site designator.
+        :param node: A 5-character designator for a site. Partial strings acceptable.
+        :param instrument: A 12-character designator for an instrument. Partial strings acceptable.
+        :param stream: A variable character designator for an instrument stream. Partial strings acceptable.
+        :param begin_datetime: Beginning of date range as a datetime object.
+        :param end_datetime: Ending of date range as a datetime object.
+        :param process_qartod: If True, variables with associated qartod tests will be NaNed if they fall within the
+            suppled nan_flags.
+        :param nan_flags: Determines which data to NaN.
+        :param drop_qartod: Drop the qartod test variables to clean up space.
+        :param dev_filepaths: A list of filepaths, where each filepath matches the index of the files attribute.
+        :param tscor_filepath: The filepath to an ACS TS4.cor file.
+        """
+
+        super().__init__(site.upper(), node.upper(), instrument.upper(), stream.lower(), 
+                         begin_datetime, end_datetime, process_qartod, nan_flags, drop_qartod)
         
+        if self.dev_filepaths is None:
+            raise FileNotFoundError('No dev files supplied.')
+        else:
+            self.dev_filepaths = dev_filepaths #Filepath index much match file index.
+        if tscor_filepath is None:
+            warnings.warn('No TS4.cor file supplied. Defaulting to internal package file.')
+            self.tscor_filepath = f"{_USER_DIR}/ooijh/__cals__/TS4.cor"
+        else:
+            self.tscor_filepath = tscor_filepath
     
-    def process(self, dev_filepath, tscor_filepath = '/home/jovyan/ooijh/cals/optaa/TS4.cor', pre_cal_filepath = None, post_cal_filepath = None):
-        dev = Dev(dev_filepath)
-        tscor = TSCor(tscor_filepath)
+    
+    def preprocess(self, ds_list: list) -> list:
+        """
+        The preprocess function is for operations or actions that may be dataset dependent.
+
+        :param ds_list: A list of xarray datasets.
+        :return: A list of preprocessed xarray datasets.
+        """
+
+        if len(ds_list) != len(self.dev_filepaths):
+            raise ValueError('dev_filepaths must be a list of filepaths equivalent to each file in KDATA.files.')
         
-        ds_list = self.open_datasets()
+        # Preprocess data.
         ds_list = [ds.drop_vars(DROP_OPTAA_VARS, errors = 'ignore') for ds in ds_list]
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
             with multiprocessing.Pool(len(ds_list)) as pool:
-                ds_list = pool.map(drop_qartod_test_vars, ds_list)        
+                ds_list = pool.map(drop_qartod_test_vars, ds_list)
         
-         rename = {
-        'a_signal_dark_counts': 'a_signal_dark',
-        'a_reference_dark_counts': 'a_reference_dark',
-        'a_signal_counts': 'a_signal',
-        'a_reference_counts': 'a_reference',
-        'c_signal_dark_counts': 'c_signal_dark',
-        'c_reference_dark_counts': 'c_reference_dark',
-        'c_signal_counts': 'c_signal',
-        'c_reference_counts': 'c_reference',
-    }
-        
-    
-    
-    
-#     def process(self):
-#         # COMBINE DATA GOES HERE
-#         ds_list = self.open_datasets()
-#         ds_list = [ds.drop_vars(DROP_OPTAA_VARS, errors = 'ignore') for ds in ds_list]
-#         if self.process_qartod is True:
-#             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
-#         if self.drop_qartod is True:
-#             with multiprocessing.Pool(len(ds_list)) as pool:
-#                 ds_list = pool.map(drop_qartod_test_vars, ds_list)
-#         ds = self.combine_data(ds_list)
+        # Processes each file based on supplied dev files.
+        preprocessed_ds_list = []    
+        for i in range(len(ds_list)):
+            ds = ds_list[i]
+            dev = Dev(self.dev_filepaths[i])
+            tscor = TSCor(self.tscor_filepath)
+            __rename = {'external_temp_raw': 'raw_external_temperature',
+                       'internal_temp_raw': 'raw_internal_temperature',
+                       'a_signal_counts': 'a_signal',
+                       'c_signal_counts': 'c_signal',
+                       'a_reference_counts': 'a_reference',
+                       'c_reference_counts': 'c_reference',
+                       'elapsed_run_time': 'elapsed_time',
+                       'c_reference_dark_counts': 'c_reference_dark',
+                       'a_reference_dark_counts': 'a_reference_dark',
+                       'c_signal_dark_counts': 'c_signal_dark',
+                       'a_signal_dark_counts': 'a_signal_dark'}
+            ds = ds.rename(__rename)
+            ds = ds.assign_coords({'wavelength_a': np.unique(ds.wavelength_a), 'wavelength_c':np.unique(ds.wavelength_c)})
+            for a in ['a_signal','a_reference']:
+                ds[a] = (['time','wavelength_a'], ds[a].data)
+            for c in ['c_signal','c_reference']:
+                ds[c] = (['time','wavelength_c'], ds[c].data)
+            ds = ds.drop_dims('wavelength')
+            ds['internal_temperature'] = compute_internal_temperature(ds.raw_internal_temperature)
+            ds['external_temperature'] = compute_external_temperature(ds.raw_external_temperature)
+            ds['a_uncorr'] = compute_uncorrected(ds.a_signal, ds.a_reference, dev)
+            ds['c_uncorr'] = compute_uncorrected(ds.c_signal, ds.c_reference, dev)
+            ds['a_pg'] = compute_pg(ds.a_uncorr, 'a', ds.internal_temperature, dev)
+            ds['c_pg'] = compute_pg(ds.c_uncorr, 'c', ds.internal_temperature, dev)
+            ds['a_pg_ts'] = compute_ts(ds.a_pg, 'a', ds.sea_water_temperature, 
+                                       ds.sea_water_practical_salinity, dev, tscor)
+            ds['c_pg_ts'] = compute_ts(ds.c_pg, 'c', ds.sea_water_temperature, 
+                                       ds.sea_water_practical_salinity, dev, tscor)
 
+            # Interpolation to common wavelength bins make scattering correction easier.
+            wvls = np.arange(410, 721,1) # Most ACS' measure between 410 and 720 nm.
+            ds = ds.interp({'wavelength_a': wvls, 'wavelength_c': wvls}) # Interpolate to 1nm bins.
+            ds = ds.reset_index(['wavelength_a',
+                                 'wavelength_c'], drop = True).assign_coords(wavelength = wvls).rename({'wavelength_a':'wavelength',
+                                                                                                        'wavelength_c':'wavelength'}) # Rename wavelength dimension.
+            ds['a_pg_ts_baseline'] = scattering_correction_baseline(ds.a_pg_ts)
+            ds['a_pg_ts_fixed'] = scattering_correction_fixed(ds.a_pg_ts, ds.c_pg_ts)
+            ds['a_pg_ts_proportional'] = scattering_correction_proportional(ds.a_pg_ts, ds.c_pg_ts)
+            preprocessed_ds_list.append(ds)
+        return preprocessed_ds_list
+    
+    def process(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        The process function is for operations or actions that can be performed after multiple datasets of the same
+            type are combined.
+
+        :param ds: The input xarray dataset.
+        :return: The output processed xarray dataset.
+        """
+        return ds
         
         
-        
-#         ds = ds[sorted(ds.data_vars)] #Sort variables alphabetically because it is less obtrusive.
-#         return ds
-        
-        
-            
+    def get_data(self) -> xr.Dataset:
+        """
+        The get_data function performs the preprocess and process functions and serves up data to the end user.
+
+        :return: An xarray dataset containing the data of interest.
+        """
+        ds_list = self.open_datasets() # Open all datasets.
+        ds_list = self.preprocess(ds_list, self.dev_filepaths, self.tscor_filepath)
+        ds = self.combine_data(ds_list)
+        ds = self.process(ds)
+        ds = ds[sorted(ds.data_vars)] # Sort variables alphabetically because it is less obtrusive.
+        return ds
         
         
 class Dev():
@@ -253,13 +327,8 @@ class Dev():
         ds = self.to_ds()
         ds.to_netcdf(out_filepath, engine = 'netcdf4')
         
-  
-        
-
-        
 
 class TSCor():
-
     def __init__(self, filepath: os.path.abspath) -> None:
         """
         Parse the .cor file and assign data as attributes.
@@ -269,7 +338,6 @@ class TSCor():
         self.filepath = os.path.normpath(filepath)
         self.__read_cor()
         self.__parse_lines()
-    
     
     
     def __read_cor(self):
@@ -332,10 +400,6 @@ class TSCor():
         ds.to_netcdf(out_filepath, engine = 'netcdf4')
 
         
-        
-        
- 
-        
 def compute_internal_temperature(counts: xr.DataArray) -> xr.DataArray:
     """
     Compute internal temperature from the raw thermistor counts.
@@ -349,7 +413,6 @@ def compute_internal_temperature(counts: xr.DataArray) -> xr.DataArray:
     internal_temperature = 1 / (
                 0.00093135 + 0.000221631 * np.log(resistance) + 0.000000125741 * np.log(resistance) ** 3) - 273.15
     return internal_temperature
-
 
 
 def compute_external_temperature(counts: xr.DataArray) -> xr.DataArray:
@@ -428,14 +491,14 @@ def compute_ts(pg: xr.DataArray, channel: str,
         tsds = tsds.sel(wavelength=wvls, method='nearest')
         psi_temp, delta_t = np.meshgrid(tsds.psi_t.values, temperature.values - dev.tcal)
         psi_sal, s = np.meshgrid(tsds.psi_s_a.values, salinity.values)
-        mts = measured - ((psi_temp * delta_t) + (psi_sal * s))
+        pg_ts = pg - ((psi_temp * delta_t) + (psi_sal * s))
     elif channel.lower() == 'c':
-        wvls = list(measured.wavelength_c.values)
+        wvls = list(pg.wavelength_c.values)
         tsds = tsds.sel(wavelength=wvls, method='nearest')
         psi_temp, delta_t = np.meshgrid(tsds.psi_t.values, temperature.values - dev.tcal)
         psi_sal, s = np.meshgrid(tsds.psi_s_c.values, salinity.values)
-        pg_ts = measured - ((psi_temp * delta_t) + (psi_sal * s))
-    return mts
+        pg_ts = pg - ((psi_temp * delta_t) + (psi_sal * s))
+    return pg_ts
 
 
 def scattering_correction_baseline(a_pg_ts: xr.DataArray, reference_wavelength: int = 715):
