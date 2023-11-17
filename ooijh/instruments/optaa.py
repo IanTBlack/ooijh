@@ -38,7 +38,7 @@ class OPTAA(KDATA):
         super().__init__(site.upper(), node.upper(), instrument.upper(), stream.lower(), 
                          begin_datetime, end_datetime, process_qartod, nan_flags, drop_qartod)
         
-        if self.dev_filepaths is None:
+        if dev_filepaths is None:
             raise FileNotFoundError('No dev files supplied.')
         else:
             self.dev_filepaths = dev_filepaths #Filepath index much match file index.
