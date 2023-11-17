@@ -133,7 +133,7 @@ class OPTAA(KDATA):
         :return: An xarray dataset containing the data of interest.
         """
         ds_list = self.open_datasets() # Open all datasets.
-        ds_list = self.preprocess(ds_list, self.dev_filepaths, self.tscor_filepath)
+        ds_list = self.preprocess(ds_list)
         ds = self.combine_data(ds_list)
         ds = self.process(ds)
         ds = ds[sorted(ds.data_vars)] # Sort variables alphabetically because it is less obtrusive.
