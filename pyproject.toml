@@ -2,7 +2,7 @@
 name = "ooijh"
 version = "0.0.1"
 authors = [
-  { name="Ian Black", email="blackia@oregonstate.edu" },
+  { name="Ian Black", email="iantimothyblack@gmail.com" },
 ]
 description = "A package for navigating the OOI JupyterHub."
 readme = "README.md"
