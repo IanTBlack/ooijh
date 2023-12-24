@@ -12,8 +12,8 @@ from ooijh.core import _USER_DIR
 
 class ZPLSC():
     
-    SITE_PATH = {'CE04OSPS': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/pc01b/ZPLSCB102_10.33.10.143",
-                 'CE02SHBP': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/mj01c/ZPLSCB101_10.33.13.7"}
+    SITE_PATH = {'CE02SHBP': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/mj01c/ZPLSCB101_10.33.13.7",
+                 'CE04OSPS': f"{_USER_DIR}/ooi/rsn_cabled/rsn_data/DVT_Data/pc01b/ZPLSCB102_10.33.10.143"}
     
     def __init__(self, site: str, begin_datetime: datetime, end_datetime: datetime):
         self.bdt = begin_datetime
@@ -57,7 +57,7 @@ class ZPLSC():
                     ed_list.append(_ed)
                 else:
                     msg = f"File: {fp} only has {len(_ed.platform.channel)} channels. This file will not be added to the combined dataset."
-                    raise warnings.warn(msg)
+                    warnings.warn(msg)
             ed = ep.combine_echodata(ed_list)
         return ed
     
@@ -72,8 +72,8 @@ class ZPLSC():
             mvbs = mvbs.swap_dims({'echo_range':'depth'})
             mvbs = ep.consolidate.swap_dims_channel_frequency(mvbs)
             mvbs = mvbs.drop_vars(['channel'], errors = 'ignore')
-            mvbs = mvbs.drop_dims(['echo_range'], errors = 'ignore')
-            mvbs = mvbs.rename({'Sv':'sv'})
+            mvbs = mvbs.drop_vars(['echo_range'], errors = 'ignore')
+            mvbs = mvbs.rename({'Sv':'sv','ping_time':'time','frequency_nominal':'frequency'})
         return mvbs
 
     

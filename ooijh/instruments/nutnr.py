@@ -55,7 +55,7 @@ class NUTNR(KDATA):
         :return: The output processed xarray dataset.
         """
         ds['frame_type'] = ds['frame_type'].astype(str)
-        ds = ds.where(ds.frame_type == 'SLF', drop = True) # Only serve up light frame data.
+        ds = ds.where((ds.frame_type == 'SLF') | (ds.frame_type == 'SLB') , drop = True) # Only serve up light frame data.
         return ds
         
         

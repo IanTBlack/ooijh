@@ -58,9 +58,15 @@ class CTD(KDATA):
         :return: The output processed xarray dataset.
         """
 
-        ds['sea_water_absolute_salinity'] = gsw.SA_from_SP(ds.sea_water_practical_salinity, 
-                                                           ds.sea_water_pressure, 
-                                                           ds.longitude, ds.latitude)
+        try:
+            ds['sea_water_absolute_salinity'] = gsw.SA_from_SP(ds.sea_water_practical_salinity, 
+                                                               ds.sea_water_pressure, 
+                                                               ds.longitude, ds.latitude)
+        except:
+            ds['sea_water_absolute_salinity'] = gsw.SA_from_SP(ds.sea_water_practical_salinity, 
+                                                               ds.sea_water_pressure, 
+                                                               ds.lon, ds.lat)
+            
         ds['sea_water_conservative_temperature'] = gsw.CT_from_t(ds.sea_water_absolute_salinity, 
                                                                  ds.sea_water_temperature, 
                                                                  ds.sea_water_pressure)

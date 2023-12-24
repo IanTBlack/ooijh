@@ -37,7 +37,6 @@ class OPTAA(KDATA):
 
         super().__init__(site.upper(), node.upper(), instrument.upper(), stream.lower(), 
                          begin_datetime, end_datetime, process_qartod, nan_flags, drop_qartod)
-        
         if dev_filepaths is None:
             raise FileNotFoundError('No dev files supplied.')
         else:
@@ -74,18 +73,35 @@ class OPTAA(KDATA):
             ds = ds_list[i]
             dev = Dev(self.dev_filepaths[i])
             tscor = TSCor(self.tscor_filepath)
-            __rename = {'external_temp_raw': 'raw_external_temperature',
-                       'internal_temp_raw': 'raw_internal_temperature',
-                       'a_signal_counts': 'a_signal',
-                       'c_signal_counts': 'c_signal',
-                       'a_reference_counts': 'a_reference',
-                       'c_reference_counts': 'c_reference',
-                       'elapsed_run_time': 'elapsed_time',
-                       'c_reference_dark_counts': 'c_reference_dark',
-                       'a_reference_dark_counts': 'a_reference_dark',
-                       'c_signal_dark_counts': 'c_signal_dark',
-                       'a_signal_dark_counts': 'a_signal_dark'}
-            ds = ds.rename(__rename)
+            
+            try:
+                __rename = {'external_temp_raw': 'raw_external_temperature',
+                           'internal_temp_raw': 'raw_internal_temperature',
+                           'a_signal_counts': 'a_signal',
+                           'c_signal_counts': 'c_signal',
+                           'a_reference_counts': 'a_reference',
+                           'c_reference_counts': 'c_reference',
+                           'elapsed_run_time': 'elapsed_time',
+                           'c_reference_dark_counts': 'c_reference_dark',
+                           'a_reference_dark_counts': 'a_reference_dark',
+                           'c_signal_dark_counts': 'c_signal_dark',
+                           'a_signal_dark_counts': 'a_signal_dark'}
+                ds = ds.rename(__rename)
+            except:
+                __rename = {'external_temp_raw': 'raw_external_temperature',
+                           'internal_temp_raw': 'raw_internal_temperature',
+                           'a_signal_counts': 'a_signal',
+                           'c_signal_counts': 'c_signal',
+                           'a_reference_counts': 'a_reference',
+                           'c_reference_counts': 'c_reference',
+                           'on_seconds': 'elapsed_time',
+                           'c_reference_dark_counts': 'c_reference_dark',
+                           'a_reference_dark_counts': 'a_reference_dark',
+                           'c_signal_dark_counts': 'c_signal_dark',
+                           'a_signal_dark_counts': 'a_signal_dark'}
+                ds = ds.rename(__rename)
+                
+                
             ds = ds.assign_coords({'wavelength_a': np.unique(ds.wavelength_a), 'wavelength_c':np.unique(ds.wavelength_c)})
             for a in ['a_signal','a_reference']:
                 ds[a] = (['time','wavelength_a'], ds[a].data)
@@ -112,8 +128,12 @@ class OPTAA(KDATA):
             ds['a_pg_ts_baseline'] = scattering_correction_baseline(ds.a_pg_ts)
             ds['a_pg_ts_fixed'] = scattering_correction_fixed(ds.a_pg_ts, ds.c_pg_ts)
             ds['a_pg_ts_proportional'] = scattering_correction_proportional(ds.a_pg_ts, ds.c_pg_ts)
+            
+            ds = ds[['elapsed_time','c_pg_ts','a_pg_ts','a_pg_ts_baseline','a_pg_ts_fixed','a_pg_ts_proportional']]
+            
             preprocessed_ds_list.append(ds)
         return preprocessed_ds_list
+    
     
     def process(self, ds: xr.Dataset) -> xr.Dataset:
         """
@@ -548,3 +568,24 @@ def scattering_correction_proportional(a_pg_ts: xr.DataArray, c_pg_ts: xr.DataAr
     ref_c = c_pg_ts.sel(wavelength=reference_wavelength, method='nearest')
     scatcorr = a_pg_ts - ((ref_a / (ref_c - ref_a)) * (c_pg_ts - a_pg_ts))
     return scatcorr
+
+
+
+def compute_poc(c_p: xr.DataArray) -> xr.DataArray:
+    """Compute POC via Gardner et al, 2006."""
+    C660 = c_p.sel(wavelength=660)
+    POC = C660 * 381
+    return POC
+
+
+def compute_chl(a_p: xr.DataArray) -> xr.DataArray:
+    """Compute chlorophyll-a from absorption line height via Roesler and Barnard 2013."""
+    a715 = a_p.sel(wavelength=715)
+    a676 = a_p.sel(wavelength=676)
+    a650 = a_p.sel(wavelength=650)
+
+    abl = ((a715 - a650) / (715 - 650)) * (676 - 650) + a650
+    alh = a676 - abl
+
+    chl = alh / 0.0104
+    return chl
