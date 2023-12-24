@@ -11,7 +11,7 @@ DROP_STREAMS = ['data_header','system_data','config','engineering','metadata','p
 
 
 DROP_SYS_VARS = ['driver_timestamp','id','internal_timestamp','port_timestamp','provenance','preferred_timestamp',
-                 'ingestion_timestamp', 'suspect_timestamp','dcl_controller_timestamp']
+                 'ingestion_timestamp', 'suspect_timestamp','dcl_controller_timestamp','profiler_timestamp']
 
 
 DROP_CTD_VARS = ['ctd_time', 'pressure_temp', 'conductivity','temperature', 'date_time_string','pressure',
@@ -23,7 +23,7 @@ DROP_PHSEN_VARS = ['record_type','voltage_battery','thermistor_start','thermisto
                    'record_time','reference_light_measurments', 'reference_light_measurements_dim_0', 'spectrum',
                    'signal_intensity_578_dim_0', 'ph_light_measurements_dim_0','signal_intensity_434_dim_0',
                    'ph_light_measurements','signal_intensity_578','phsen_battery_volts','signal_intensity_434',
-                   'record_length','checksum','reference_light_measurements','unique_id','sea_water_practical_salinity']
+                   'record_length','checksum','reference_light_measurements','unique_id','sea_water_practical_salinity','phsen_abcdef_signal_intensity_578_dim_0', 'phsen_abcdef_signal_intensity_434_dim_0','reference_light_measurements_dim_0', 'phsen_abcdef_signal_intensity_434', 'phsen_abcdef_signal_intensity_578','passed_checksum']
 
 
 DROP_VEL3D_VARS =['ensemble_counter','correlation_beam_1','correlation_beam_2','correlation_beam_3',
@@ -33,7 +33,7 @@ DROP_VEL3D_VARS =['ensemble_counter','correlation_beam_1','correlation_beam_2','
 
 DROP_PCO2_VARS = ['spectrum','record_type','absorbance_ratio_434','absorbance_ratio_620','voltage_battery',
                   'light_measurements','pco2w_b_absorbance_blank_434','record_length','pco2w_b_absorbance_blank_620',
-                  'record_time', 'checksum','thermistor_raw', 'unique_id']
+                  'record_time', 'checksum','thermistor_raw', 'unique_id','date_time_string','humidity', 'humidity_temperature','irga_detector_temperature','avg_irga_temperature','current_a2d','zero_a2d','supply_voltage''irga_source_temperature','eastward_velocity','gas_stream_pressure','longwave_irradiance','northward_velocity','precipitation','supply_voltage','shortwave_irradiance']
 
 
 DROP_ADCP_VARS = ['corrected_echo_intensity_beam4','ensemble_number', 'corrected_echo_intensity_beam3',
@@ -75,7 +75,7 @@ DROP_NUTNR_VARS = ['aux_fitting_1', 'aux_fitting_2', 'checksum','date_of_sample'
                    'nutnr_integration_time_factor','nutnr_nitrogen_in_nitrate','nutnr_spectrum_average',
                    'nutnr_voltage_int', 'sea_water_practical_salinity', 'sea_water_temperature','serial_number',
                    'spectral_channels','temp_interior','temp_lamp','temp_spectrometer','time_of_sample','voltage_lamp',
-                   'voltage_main','wavelength','nitrate_concentration']
+                   'voltage_main','wavelength','nitrate_concentration','ctd_time_uint32','day_of_year','year','ctdpf_j_cspp_instrument_recovered-sea_water_practical_salinity','ctdpf_j_cspp_instrument_recovered-sea_water_temperature']
 
 
 DROP_VELPT_VARS = ['amplitude_beam1','amplitude_beam2','amplitude_beam3','analog1','battery_voltage_dv',
@@ -93,7 +93,14 @@ DROP_VEL3D_VARS = ['amplitude_beam_1','amplitude_beam_2','amplitude_beam_3','ana
                    'sea_water_pressure_mbar','turbulent_velocity_north','turbulent_velocity_east',
                    'turbulent_velocity_vertical']
 
+DROP_FDCHP_VARS = ['v_num_datacollection','time_datacollection','pitch_min','pitch_max','u_corr_std','z_accel_std',
+                   'wind_v_max','wind_v_min','w_corr_std','x_ang_rate_std','y_ang_rate_min','v_corr_std','heading_std','status_datacollection','roll_min','roll_max','heading_max','speed_of_sound_max','wind_w_std','z_ang_rate_min','x_ag_rate_min','roll_std','x_accel_std','fdchp_status_1','fdchp_status_2','day','millisecond','month','minute','heading_min','second','pitch_std','year','y_ang_rate_std','z_ang_rate_std','hour','instrument_start_timestamp','speed_of_sound_min','speed_of_sound_std','wind_u_min','wind_u_max','wind_u_std','wind_v_min','wind_v_max','wind_v_std','x_accel_max','x_accel_min','x_ang_rate_max','x_ang_rate_min','y_accel_max','y_accel_min','y_accel_std','z_accel_min','z_accel_max']
 
+DROP_WAVSS_VARS = ['time_string','serial_number','date_string']
+
+DROP_MOPAK_VARS = []
+
+DROP_PARAD_VARS = ['date_string', 'parad_j_par_counts_output','time_string']
 
 def drop_qc_test_vars(ds: xr.Dataset) -> xr.Dataset:
     """
