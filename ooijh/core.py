@@ -25,7 +25,7 @@ class KDATA():
 
         :param site: An 8-character OOI designator for a site.
             It is recommended to use the full site designator.
-        :param node: A 5-character designator for a site. Partial strings acceptable.
+        :param node: A 5-character designator for a node. Partial strings acceptable.
         :param instrument: A 12-character designator for an instrument. Partial strings acceptable.
         :param stream: A variable character designator for an instrument stream. Partial strings acceptable.
         :param begin_datetime: Beginning of date range as a datetime object.
@@ -89,6 +89,7 @@ class KDATA():
         :param file_ext: The file extension. OOI kdata science data comes in netcdfs (.nc).
         :return:
         """
+        
         files = sorted(self.__local.glob(self.BASE_DIR + rd + f'/*{file_ext}'))
         dtrfiles =[]
         for file in files:
@@ -130,10 +131,16 @@ class KDATA():
         ds = drop_qc_test_vars(ds) # Remove custom qc test variables. Deprecated???
 
         # If lat is not a variable, make lat and lon variables from attribute data.
+        # Primarily intended for the computation of absolute salinity by the ctd module.
         if 'lat' not in ds.data_vars and 'latitude' not in ds.data_vars and 'lat' not in ds.coords:
             ds['latitude'] = ds.lat
             ds['longitude'] = ds.lon
-
+        elif 'lat' in ds.coords:
+            ds['latitude'] = ds.lat
+            ds['longitude'] = ds.lon
+            ds = ds.drop(['lat','lon'])
+            
+            
         ds = ds.sortby('time')
         return ds
     
