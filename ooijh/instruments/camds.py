@@ -44,7 +44,37 @@ class CAMDS():
         return files
         
 
-    def open_image(self, filepath):
-        im = cv2.imread(file)
+    def open_image(self, filepath: os.path.abspath):
+        im = cv2.imread(filepath)
         return im
     
+
+    def resize(self, im: object, scale: float = 0.5):
+        im = cv2.resize(im,(0,0), fx = scale, fy = scale)
+        return im
+    
+    def timestamp(self, im, dtstr, position = (50,100), font = cv2.FONT_HERSHEY_SIMPLEX, size = 1.5, color = (255,255,255), thickness = 2, alias = cv2.LINE_AA):
+        im = cv2.putText(im, dtstr, position, font, size, color, thickness, alias)
+        return im
+    
+    
+    def build_timeslapse(self,filename: os.path.abspath, fps: int = 20, timestamp: bool = True, resize_scale: float or None = None, fourcc: object = cv2.VideoWriter_fourcc(*'mp4v')):
+        init = self.open_image(self.files[-1])
+        if resize_scale is not None:
+            init = self.resize(init, scale = resize_scale)
+        height, width, _ = init.shape
+        video = cv2.VideoWriter(filename, fourcc, fps, (width, height))
+        for file in self.files:
+            try:
+                _dtstr = re.findall('(\d{8}T\d{6},\d{3}Z)',file)[0]
+                dt = datetime.strptime(_dtstr,'%Y%m%dT%H%M%S,%fZ')
+                dtstr = dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+                im = self.open_image(file)
+                if resize_scale is not None:
+                    im = self.resize(im, scale = resize_scale)
+                if timestamp is True:
+                    im = self.timestamp(im, dtstr)
+                video.write(im)
+            except:
+                continue
+        video.release()
