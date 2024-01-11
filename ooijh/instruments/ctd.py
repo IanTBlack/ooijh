@@ -1,6 +1,7 @@
 from datetime import datetime
 import gsw
 import multiprocessing
+import os
 import xarray as xr
 
 from ooijh.core import KDATA
@@ -44,7 +45,7 @@ class CTD(KDATA):
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
-            with multiprocessing.Pool(len(ds_list)) as pool:
+            with multiprocessing.Pool(os.cpu_count()-1) as pool:
                 ds_list = pool.map(drop_qartod_test_vars, ds_list)
         return ds_list
     
@@ -59,20 +60,22 @@ class CTD(KDATA):
         """
 
         try:
-            ds['sea_water_absolute_salinity'] = gsw.SA_from_SP(ds.sea_water_practical_salinity, 
-                                                               ds.sea_water_pressure, 
-                                                               ds.longitude, ds.latitude)
+            ds['sea_water_absolute_salinity'] = (['time'],gsw.SA_from_SP(ds.sea_water_practical_salinity.values, 
+                                                               ds.sea_water_pressure.values, 
+                                                               ds.longitude.values, ds.latitude.values))
         except:
-            ds['sea_water_absolute_salinity'] = gsw.SA_from_SP(ds.sea_water_practical_salinity, 
-                                                               ds.sea_water_pressure, 
-                                                               ds.lon, ds.lat)
+            ds['sea_water_absolute_salinity'] = (['time'],gsw.SA_from_SP(ds.sea_water_practical_salinity.values, 
+                                                               ds.sea_water_pressure.values, 
+                                                               ds.lon.values, ds.lat.values))
             
-        ds['sea_water_conservative_temperature'] = gsw.CT_from_t(ds.sea_water_absolute_salinity, 
-                                                                 ds.sea_water_temperature, 
-                                                                 ds.sea_water_pressure)
-        ds['sea_water_density'] = gsw.density.rho(ds.sea_water_absolute_salinity, 
-                                                  ds.sea_water_conservative_temperature, 
-                                                  ds.sea_water_pressure) #Overwrites OOI sea_water_density derivation.
+        ds['sea_water_conservative_temperature'] = (['time'], gsw.CT_from_t(ds.sea_water_absolute_salinity.values, 
+                                                                 ds.sea_water_temperature.values, 
+                                                                 ds.sea_water_pressure.values))
+        ds['sea_water_density'] = (['time'], gsw.density.rho(ds.sea_water_absolute_salinity.values, 
+                                                  ds.sea_water_conservative_temperature.values, 
+                                                  ds.sea_water_pressure.values)) #Overwrites OOI sea_water_density derivation.
+        
+
         return ds
         
         

@@ -1,6 +1,7 @@
 from datetime import datetime
 import multiprocessing
 import xarray as xr
+import os
 
 from ooijh.core import KDATA
 from ooijh.drops import DROP_FLORT_VARS, drop_qartod_test_vars
@@ -42,7 +43,7 @@ class FLORT(KDATA):
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
-            with multiprocessing.Pool(len(ds_list)) as pool:
+            with multiprocessing.Pool(os.cpu_count()-1) as pool:
                 ds_list = pool.map(drop_qartod_test_vars, ds_list)
         return ds_list
     
