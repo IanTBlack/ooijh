@@ -9,6 +9,16 @@ DROP_STREAMS = ['data_header','system_data','config','engineering','metadata','p
                 'hardware','voltage','station','winch_eng','record_cal','dev1','primary_node','clock_data',
                 'identification_string','settings','hyd_o','msg_counts','superv','error','cg_dcl','cg_stc_eng','wfp_eng']
 
+DROP_DS_ATTRS = ['publisher_email','collection_method','stream',
+                'featureType','creator_email','keywords','cdm_data_type',
+                'date_created', 'id','requestUUID','contributor_role','summary',
+                 'keywords_vocabulary','feature_Type','infoURL','license','contributor_name',
+                 'uuid','title','acknowledgement','source','creator_url','nodc_template_version',
+                 'processing_level','history','FirmwareVersion','SoftwareVersion',
+                 'Mobile','AssetUniqueID','RemoteResources','Notes','Owner','ShelfLifeExpirationDate',
+                 'AssetManagementRecordLastModified','time_coverage_end','time_coverage_start','time_coverage_resolution',
+                 'publisher_url','SerialNumber','date_modified','sourceUrl','publisher_name','creator_name','institution'] 
+
 
 DROP_SYS_VARS = ['driver_timestamp','id','internal_timestamp','port_timestamp','provenance','preferred_timestamp',
                  'ingestion_timestamp', 'suspect_timestamp','dcl_controller_timestamp','profiler_timestamp']

@@ -6,7 +6,7 @@ import os
 import re
 import xarray as xr
 
-from ooijh.drops import DROP_METHODS, DROP_STREAMS, DROP_SYS_VARS, drop_qc_test_vars
+from ooijh.drops import DROP_METHODS, DROP_STREAMS, DROP_SYS_VARS, DROP_DS_ATTRS, drop_qc_test_vars
 
 
 _USER_DIR = os.path.expanduser('~')
@@ -140,7 +140,6 @@ class KDATA():
             ds['longitude'] = ds.lon
             ds = ds.drop(['lat','lon'])
             
-            
         ds = ds.sortby('time')
         return ds
     
@@ -151,7 +150,7 @@ class KDATA():
 
         :return: A list of xarray datasets.
         """
-        with multiprocessing.Pool(len(self.files)) as pool:
+        with multiprocessing.Pool(os.cpu_count()-1) as pool:
             ds_list = pool.map(self.import_file, self.files)
         return ds_list
     
@@ -163,6 +162,24 @@ class KDATA():
         :param ds_list: A list of datasets.
         :return: A combined or concatenated dataset, sliced by the instance begin_datetime and end_datetime.
         """
+        
+        dataset = ds_list[0]
+        coord_attributes = {}
+        var_attributes = {}
+        for _coord in dataset.coords:
+            coord_attributes[_coord] = dict(sorted(dataset[_coord].attrs.items()))
+        for _var in dataset.data_vars:
+            var_attributes[_var] = dict(sorted(dataset[_var].attrs.items()))
+        dataset_attributes = dataset.attrs
+        for ds_attr in DROP_DS_ATTRS:
+            try:
+                del dataset_attributes[ds_attr]
+            except:
+                continue             
+        dataset_attributes['comment'] = 'This is a combined dataset file from all possible data delivery methods.'
+        dataset_attributes = dict(sorted(dataset_attributes.items()))
+        
+        
         try: # Try to merge by coordinates.
             ds = xr.combine_by_coords(ds_list, combine_attrs = 'drop')
             ds = ds.drop_duplicates(list(ds.dims))
@@ -171,6 +188,13 @@ class KDATA():
         ds = ds.sortby('time')
         ds = ds.drop_duplicates(list(ds.dims))
         ds = ds.sel(time = slice(self.bdt.strftime('%Y-%m-%d %H:%M:%S'),self.edt.strftime('%Y-%m-%d %H:%M:%S')))
+        
+
+        ds.attrs = dataset_attributes
+        for _coord in ds.coords:
+            ds[_coord].attrs = coord_attributes[_coord]
+        for _var in ds.data_vars:
+            ds[_var].attrs = var_attributes[_var]
         return ds
     
     
