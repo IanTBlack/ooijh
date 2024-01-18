@@ -113,6 +113,10 @@ class KDATA():
         for rd in rds:
             rdfiles = self.list_dataset_files(rd)
             files = files + rdfiles
+            
+        if len(files) == 0:
+            msg = 'No files found using given user inputs.'
+            raise SystemError(msg)
         return files
             
     
@@ -217,3 +221,5 @@ class KDATA():
             #ds[qdc] = ds[qdc].where(ds[qec] != 1 & ~ds[qrc].isin(nan_flags), np.nan) # Might be deprecated if OOI does not change executed flags to single digits.
             ds[qdc] = ds[qdc].where(~ds[qrc].isin(nan_flags), np.nan)
         return ds
+    
+    
