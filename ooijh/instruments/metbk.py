@@ -58,9 +58,9 @@ class METBK(KDATA):
         :return: The output processed xarray dataset.
         """
 
-        __rename = {'met_salsurf': 'sea_surface_practical_salinity',
+        __rename = {'met_salsurf': 'sea_water_practical_salinity',
                    'met_current_direction': 'current_direction',
-                   'met_current_speed':'current_velocity',
+                   'met_current_speed':'current_speed',
                    'eastward_velocity': 'sea_water_eastward_velocity',
                    'northward_velocity': 'sea_water_northward_velocity',
                    'met_netsirr':'net_downwelling_sirr',
@@ -72,15 +72,30 @@ class METBK(KDATA):
         # Compute additional data products.
         ds['sea_water_pressure'] = (['time'],gsw.p_from_z(ds.ct_depth.values * -1, ds.latitude.values))
         ds = ds.drop_vars(['ct_depth'], errors = 'ignore')
-        ds['sea_surface_absolute_salinity'] = (['time'],gsw.SA_from_SP(ds.sea_surface_practical_salinity.values, 
+        ds['sea_water_absolute_salinity'] = (['time'],gsw.SA_from_SP(ds.sea_water_practical_salinity.values, 
                                                              ds.sea_water_pressure.values, 
                                                              ds.longitude.values, ds.latitude.values))
-        ds['sea_surface_conservative_temperature'] = (['time'],gsw.CT_from_t(ds.sea_surface_absolute_salinity.values, 
-                                                                   ds.sea_surface_temperature.values, 
+        ds['sea_water_conservative_temperature'] = (['time'],gsw.CT_from_t(ds.sea_water_absolute_salinity.values, 
+                                                                   ds.sea_water_temperature.values, 
                                                                    ds.sea_water_pressure.values))
-        ds['sea_surface_density'] = (['time'],gsw.density.rho(ds.sea_surface_absolute_salinity.values, 
-                                                    ds.sea_surface_conservative_temperature.values, 
+        ds['sea_water_density'] = (['time'],gsw.density.rho(ds.sea_water_absolute_salinity.values, 
+                                                    ds.sea_water_conservative_temperature.values, 
                                                     ds.sea_water_pressure.values)) #Overwrites OOI sea_water_density derivation.
+        
+        
+        
+        ds['sea_water_absolute_salinity'].attrs['units'] = 'ASU'
+        ds['sea_water_absolute_salinity'].attrs['units_tex'] = r'$\frac{g}{kg}$'
+        ds['sea_water_absolute_salinity'].attrs['description'] = 'The mass fraction of salt in seawater. Defined under TEOS-10.'
+
+        ds['sea_water_conservative_temperature'].attrs['units'] = 'degrees Celsius'
+        ds['sea_water_conservative_temperature'].attrs['units_tex'] = r'$^{\circ}C$'
+        ds['sea_water_conservative_temperature'].attrs['description'] = 'Conservative temperature represents the heat content of the ocean conserved during mixing and pressure changes. Further defined under TEOS-10.'
+        
+        ds['sea_water_density'].attrs['units'] = 'kilograms per cubic meter'
+        ds['sea_water_density'].attrs['units_tex'] = r'$\frac{kg}{m^3}$'
+        ds['sea_water_density'].attrs['description'] = 'Sea water density calculated under TEOS-10.'
+        
         
         return ds
                     

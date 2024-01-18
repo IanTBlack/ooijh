@@ -76,6 +76,18 @@ class CTD(KDATA):
                                                   ds.sea_water_pressure.values)) #Overwrites OOI sea_water_density derivation.
         
 
+        ds['sea_water_absolute_salinity'].attrs['units'] = 'ASU'
+        ds['sea_water_absolute_salinity'].attrs['units_tex'] = r'$\frac{g}{kg}$'
+        ds['sea_water_absolute_salinity'].attrs['description'] = 'The mass fraction of salt in seawater. Defined under TEOS-10.'
+
+        ds['sea_water_conservative_temperature'].attrs['units'] = 'degrees Celsius'
+        ds['sea_water_conservative_temperature'].attrs['units_tex'] = r'$^{\circ}C$'
+        ds['sea_water_conservative_temperature'].attrs['description'] = 'Conservative temperature represents the heat content of the ocean conserved during mixing and pressure changes. Further defined under TEOS-10.'
+        
+        ds['sea_water_density'].attrs['units'] = 'kilograms per cubic meter'
+        ds['sea_water_density'].attrs['units_tex'] = r'$\frac{kg}{m^3}$'
+        ds['sea_water_density'].attrs['description'] = 'Sea water density calculated under TEOS-10.'
+        
         return ds
         
         
