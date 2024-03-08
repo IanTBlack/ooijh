@@ -70,7 +70,7 @@ DROP_FLORT_VARS = ['raw_signal_cdom','measurement_wavelength_chl','measurement_w
                    'sea_water_practical_salinity','sea_water_temperature']
 
 
-DROP_METBK_VARS = ['met_windavg_mag_corr_east','met_windavg_mag_corr_north','barometric_pressure']
+DROP_METBK_VARS = ['met_windavg_mag_corr_east','met_windavg_mag_corr_north','barometric_pressure','met_netlirr_minute','met_spechum','met_netsirr','met_sensflx_minute','longwave_irradiance','shortwave_irradiance','sea_surface_conductivity']
 
 
 DROP_DOSTA_VARS = ['blue_amplitude','blue_phase','calibrated_phase','dosta_abcdjm_cspp_tc_oxygen','int_ctd_pressure',
