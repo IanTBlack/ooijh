@@ -42,12 +42,12 @@ class ZPLSC():
         return files
         
         
-    def open_file(self, filepath: os.path.abspath):
+    def open_file(self, filepath: os.path.abspath) -> object:
         ed = ep.open_raw(raw_file = filepath, sonar_model = 'ek60')
         return ed
     
     
-    def combine_data(self, filepaths: list):
+    def combine_data(self, filepaths: list) -> object:
         ed_list = []
         with warnings.catch_warnings():
             warnings.simplefilter("ignore") # Catch user warnings that echopype may throw. Usually time related warnings.
