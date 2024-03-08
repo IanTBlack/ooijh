@@ -44,11 +44,11 @@ class METBK(KDATA):
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
-            with multiprocessing.Pool(os.cpu_count()-1) as pool:
+            with multiprocessing.Pool(os.cpu_count()-1, maxtasksperchild = 1) as pool:
                 ds_list = pool.map(drop_qartod_test_vars, ds_list)
         return ds_list
     
-    
+        
     def process(self, ds: xr.Dataset) -> xr.Dataset:
         """
         The process function is for operations or actions that can be performed after multiple datasets of the same
@@ -63,10 +63,10 @@ class METBK(KDATA):
                    'met_current_speed':'current_speed',
                    'eastward_velocity': 'sea_water_eastward_velocity',
                    'northward_velocity': 'sea_water_northward_velocity',
-                   'met_netsirr':'net_downwelling_sirr',
                    'met_barpres': 'barometric_pressure',
                     'met_relwind_speed': 'relative_wind_speed',
-                    'met_relwind_direction': 'relative_wind_direction'}
+                    'met_relwind_direction': 'relative_wind_direction',
+                   'sea_surface_temperature': 'sea_water_temperature'}
         ds = ds.rename(__rename)
     
         # Compute additional data products.
@@ -83,7 +83,6 @@ class METBK(KDATA):
                                                     ds.sea_water_pressure.values)) #Overwrites OOI sea_water_density derivation.
         
         
-        
         ds['sea_water_absolute_salinity'].attrs['units'] = 'ASU'
         ds['sea_water_absolute_salinity'].attrs['units_tex'] = r'$\frac{g}{kg}$'
         ds['sea_water_absolute_salinity'].attrs['description'] = 'The mass fraction of salt in seawater. Defined under TEOS-10.'
@@ -98,7 +97,8 @@ class METBK(KDATA):
         
         
         return ds
-                    
+    
+    
         
     def get_data(self) -> xr.Dataset:
         """

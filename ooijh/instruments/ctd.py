@@ -45,7 +45,7 @@ class CTD(KDATA):
         if self.process_qartod is True:
             ds_list = [self.nan_by_qartod(ds, self.nan_flags) for ds in ds_list]
         if self.drop_qartod is True:
-            with multiprocessing.Pool(os.cpu_count()-1) as pool:
+            with multiprocessing.Pool(os.cpu_count()-1, maxtasksperchild = 1) as pool:
                 ds_list = pool.map(drop_qartod_test_vars, ds_list)
         return ds_list
     

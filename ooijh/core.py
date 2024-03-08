@@ -95,7 +95,7 @@ class KDATA():
         for file in files:
             if len(re.findall(rd,file)) != 2: # Drop ancillary datasets.
                 continue
-            file_begin, file_end = [datetime.strptime(dt,'%Y%m%dT%H%M%S') for dt in re.findall("(\d{8}T\d{6})", file)]
+            file_begin, file_end = [datetime.strptime(dt,'%Y%m%dT%H%M%S') for dt in re.findall(r"(\d{8}T\d{6})", file)]
             if (file_begin <= self.bdt <= file_end or file_begin <= self.edt <= file_end or 
                 self.bdt <= file_begin <= self.edt or self.bdt <= file_end <= self.edt):            
                 dtrfiles.append(file)        
@@ -154,7 +154,7 @@ class KDATA():
 
         :return: A list of xarray datasets.
         """
-        with multiprocessing.Pool(os.cpu_count()-1) as pool:
+        with multiprocessing.Pool(os.cpu_count()-1, maxtasksperchild = 1) as pool:
             ds_list = pool.map(self.import_file, self.files)
         return ds_list
     
@@ -198,7 +198,10 @@ class KDATA():
         for _coord in ds.coords:
             ds[_coord].attrs = coord_attributes[_coord]
         for _var in ds.data_vars:
-            ds[_var].attrs = var_attributes[_var]
+            try:
+                ds[_var].attrs = var_attributes[_var]
+            except:
+                pass
         return ds
     
     
@@ -217,7 +220,11 @@ class KDATA():
             qecs = [v + '_qartod_executed' for v in variables]
         for qec in qecs:
             qdc = qec.split('_qartod_executed')[0]
-            qrc = qdc + '_qartod_results'   
+            if qdc not in list(ds.data_vars):
+                # Sometimes 'barometric_presssure' isn't in the METBK dataset even through the qartod outputs for it are, which can cause failure.
+                # So this if statement is for checking if the variable actually exists.
+                continue
+            qrc = qdc + '_qartod_results'  
             #ds[qdc] = ds[qdc].where(ds[qec] != 1 & ~ds[qrc].isin(nan_flags), np.nan) # Might be deprecated if OOI does not change executed flags to single digits.
             ds[qdc] = ds[qdc].where(~ds[qrc].isin(nan_flags), np.nan)
         return ds
