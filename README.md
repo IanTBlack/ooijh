@@ -20,7 +20,7 @@ The code within this repository will only work with the OOI JupyterHub.
 
 3. Copy the basic examples to the user folder.
 
-`cp -r __examples__ ~/ooijh_examples`
+`cp -r examples ~/ooijh_examples`
 
 4. Navigate to the ooijh_examples folder and test out an example.
 
